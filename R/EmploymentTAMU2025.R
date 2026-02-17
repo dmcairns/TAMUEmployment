@@ -1,6 +1,7 @@
 #### Graphing Functions ----
 
-employmentRankGrid <- function(theData, startSemester, endSemester, colorScheme){
+employmentRankGrid <- function(theData, startSemester, endSemester, colorScheme,
+                               showLegend=FALSE){
   require(gt)
   req(startSemester)
   req(endSemester)
@@ -24,7 +25,7 @@ employmentRankGrid <- function(theData, startSemester, endSemester, colorScheme)
     arrange(numericSemester) %>%
     select("Faculty", "sem2", "rank") %>%
     pivot_wider(id_cols=c("Faculty"), names_from="sem2", values_from=rank) %>%
-    arrange(Faculty)
+    arrange(Faculty, .locale="en")
 
   displayGrid <- displayData %>%
     gt() %>%
@@ -73,6 +74,48 @@ departmentStaffingChart <- function(theData, startSemester, endSemester, showFac
   return(theChart)
 }
 
+employmentRankLegend <- function(theData){
+  # 1. Prepare the legend data (removing 'Unknown' and duplicates)
+  legend_df <- theData %>%
+    filter(title != "Unknown") %>%
+    distinct(title, .keep_all = TRUE) %>%
+    select(title, color) %>%
+    pivot_wider(names_from = title, values_from = color)
+
+  # 2. Start the gt object
+  legend_gt <- legend_df %>%
+    gt() %>%
+    tab_header(title = md("**Legend**"))
+
+  # 3. Use a loop to apply colors to each column automatically
+  for (col_name in names(legend_df)) {
+    current_color <- legend_df[[col_name]]
+
+    legend_gt <- legend_gt %>%
+      tab_style(
+        style = list(
+          cell_fill(color = current_color),
+          cell_text(color = ifelse(
+            # Basic logic to switch text color for readability on dark backgrounds
+            current_color %in% c("#500000", "#383c74", "#2c4709"),
+            "white", "black"),
+            size = "small", weight = "bold")
+        ),
+        locations = cells_body(columns = all_of(col_name))
+      )
+  }
+
+  # 4. Final Polish
+  legend_gt <- legend_gt %>%
+    cols_align(align = "center") %>%
+    tab_options(
+      table.width = pct(100),
+      column_labels.hidden = FALSE, # Hide labels so the cell itself is the legend
+      table.border.top.style = "none"
+    )
+  legend_gt
+}
+
 #### Color Schemes ----
 employmentGridColorScheme <- data.frame(value=c(1:14),
                                         title=c("Assistant Professor",
@@ -80,12 +123,12 @@ employmentGridColorScheme <- data.frame(value=c(1:14),
                                                 "Professor",
                                                 "Visiting Assistant Professor",
                                                 "Unknown",
-                                                "Unknown",
+                                                "Research Assistant Professor",
                                                 "Instructional Assistant Professor",
                                                 "Instructional Associate Professor",
                                                 "Instructional Professor",
                                                 "Unknown",
-                                                "Unknown",
+                                                "Associate Professor of the Practice",
                                                 "Unknown",
                                                 "Visiting Lecturer",
                                                 "GAL"
@@ -96,12 +139,12 @@ employmentGridColorScheme <- data.frame(value=c(1:14),
                                           "#500000",
                                           "#2c4709",
                                           "#FFFFFF",
-                                          "#FFFFFF",
+                                          "#f5b0c7",
                                           "#a8abd3",
                                           "#6267af",
                                           "#383c74",
                                           "#FFFFFF",
-                                          "#FFFFFF",
+                                          "#ebeb52",
                                           "#FFFFFF",
                                           "#a2f2ed",
                                           "#d2a2f2"

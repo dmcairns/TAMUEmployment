@@ -74,7 +74,7 @@ departmentStaffingChart <- function(theData, startSemester, endSemester, showFac
   return(theChart)
 }
 
-employmentRankLegend <- function(theData){
+employmentRankLegendGT <- function(theData){
   # 1. Prepare the legend data (removing 'Unknown' and duplicates)
   legend_df <- theData %>%
     filter(title != "Unknown") %>%
@@ -116,6 +116,39 @@ employmentRankLegend <- function(theData){
   legend_gt
 }
 
+employmentRankLegendHTML <- function(theData){
+  # 1. Create a helper function for the legend boxes
+  make_color_box <- function(color, label) {
+    glue::glue(
+      "<span style='display:inline-block;width:12px;height:12px;background-color:{color};margin-right:5px;border:1px solid #000;'></span>{label}"
+    )
+  }
+
+  # 2. Define your colors (matching what you used in data_color)
+
+  colors  <- theData %>%
+    filter(title != "Unknown") %>%
+    select("title", "color") %>%
+    deframe() %>%
+    as.list()
+
+  # 3. Build the legend string
+  legend_html <- paste(
+    make_color_box(colors["Assistant Professor"], "Assistant Professor"),
+    make_color_box(colors["Associate Professor"], "Associate Professor"),
+    make_color_box(colors["Professor"], "Professor"),
+    make_color_box(colors["Visiting Assistant Professor"], "Visiting Assistant Professor"),
+    make_color_box(colors["Research Assistant Professor"], "Research Assistant Professor"),
+    make_color_box(colors["Instructional Assistant Professor"], "Instructional Assistant Professor"),
+    make_color_box(colors["Instructional Associate Professor"], "Instructional Associate Professor"),
+    make_color_box(colors["Instructional Professor"], "Instructional Professor"),
+    make_color_box(colors["Associate Professor of the Practice"], "Associate Professor of the Practice"),
+    make_color_box(colors["Visiting Lecturer"], "Visiting Lecturer"),
+    make_color_box(colors["GAL"], "GAL"),
+    sep = " &nbsp;&nbsp; " # Adds spacing between items
+  )
+  legend_html
+}
 #### Color Schemes ----
 employmentGridColorScheme <- data.frame(value=c(1:14),
                                         title=c("Assistant Professor",
